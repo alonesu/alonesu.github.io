@@ -1,152 +1,110 @@
-$(function () {
+$(function(){
 
-	$('.post__main img').on('click', function () {
-		var $img = $(this);
+  /* Drop-down menu */
+  $('#menu-nav-icon').click(function(){
+    $('#main-nav').slideToggle()
+  })
+  $(window).on('resize', function (){
+    if ($(window).width() > 768){
+        $('#main-nav').show();
+    }else{
+        $('#main-nav').hide();
+    }
+  });
 
-		$.fancybox.open([{
-			src: $img.attr('src'),
-			type: 'image'
-		}]);
-	});
+  /* Share */
+  var shares = $("#social-share").children();
+  var url = shares.first().attr('data-url');
+  var encodedUrl = encodeURIComponent(url)
 
-	$('[data-fancybox]').fancybox({
-		// closeClickOutside: false,
-		image: {
-			protect: true
-		}
-	});
+  shares.each(function(){
+     this.href += encodedUrl;
+  })
 
-	// key bind
+  /* Gallery Display */
+  // Get a list of gallery ids
+  var slideIndices = {};
+  var galleries = $('.gallery');
+  //console.log(galleries);
+  //console.log(galleries[0]);
 
-	// j  down
-	// k  top
-	// t  page top
-	// b  page bottom
+  $('.gallery').each(function(index){
+    //console.log( index + ": " + $( this ).attr("id") );
+    slideIndices[$(this).attr("id")] = 1;
+  });
+  //console.log(slideIndices);
 
-	// i  go index
-	var $body = $('html');
-	var unTriggerEles = [
-		'.veditor',
-		'.vnick',
-		'.vmail',
-		'.vlink',
-	];
+  galleries.each(function(){
+    showSlides($(this).attr("id"), 1);
+  })
 
-	var isKeydown = false;
-	$body.on('keydown', function (e) {
-		// console.log(e.which, 'key down', e.target);
 
-		// 有些 input 或者 textarea 不应该触发这些快捷键
-		var $tar = $(e.target);
-		var needTrigger = true;
-		for (var i = 0; i < unTriggerEles.length; i++) {
-			if ($tar.is(unTriggerEles[i])) {
-				needTrigger = false;
-				break;
-			}
-		}
+  function showSlides(id, n) {
+    galleries.each(function(){
+      var that = $(this);
+      if(that.attr("id") == id){
+        var slides = that.find('.mySlides');
+        var dots = that.find('.demo');
+        var captionText = that.find('.caption');
+        console.log("Slide length is " + slides.length);
+        if (n > slides.length){
+          slideIndices[id] = 1;
+          n = 1;
+        }
+        if (n < 1){
+          slideIndices[id] = slides.length;
+          n = slides.length;
+        }
+        console.log("n is "+ n);
+        slides.each(function(index){
+          if(index == (n-1)){
+            console.log("here");
+            $(this).css({"display": "block"});
+          }else{
+            $(this).css({"display": "none"});
+          }
+        })
+        dots.each(function(index){
+          if(index == (n-1)){
+            $(this).addClass("display");
+          }else{
+            $(this).removeClass("display");
+          }
+        })
+        var capText = $(dots[slideIndices[id]]).attr("alt");
+        try{
+          capText = capText.split('/').pop().replace(/\.[^/.]+$/, "");
+        }catch(e){
+          capText = $(dots[slideIndices[id]]).attr("alt");
+        }
+        captionText.html(capText);
+      }
+    })
+  }
 
-		if (!needTrigger) {
-			return;
-		}
+   /* install event function */
+   $(".gallery .columns .column img").each(function(){
+     $(this).click(function(){
+       var key = $(this).attr("data-id");
+       var num = $(this).attr("data-num");
+       showSlides(key, slideIndices[key] = num);
+     })
+   });
 
-		switch (e.which) {
-			case 74: // j down
-				if (!isKeydown) {
-					isKeydown = true;
-					requestAnimationFrame(function animate() {
-						var curTop = window.scrollY;
-						window.scrollTo(0, curTop + 15);
-
-						if (isKeydown) {
-							requestAnimationFrame(animate);
-						}
-					});
-				}
-
-				break;
-
-			case 75: // k up
-				if (!isKeydown) {
-					isKeydown = true;
-					requestAnimationFrame(function animate() {
-						var curTop = window.scrollY;
-						window.scrollTo(0, curTop - 15);
-
-						if (isKeydown) {
-							requestAnimationFrame(animate);
-						}
-					});
-				}
-
-				break;
-
-			case 191: // shift + / = ? show help modal
-				break;
-
-				// 16 shift
-			case 84: // t
-				window.scrollToTop(1);
-				break;
-
-			case 66: // b
-				window.scrollToBottom();
-				break;
-
-			case 78: // n half
-				window.scrollPageDown(1);
-				break;
-
-			case 77: // m
-				window.scrollPageUp(1);
-				break;
-		}
-
-	});
-
-	$body.on('keyup', function (e) {
-		isKeydown = false;
-	});
-
-	// print hint
-
-	var comments = [
-		'',
-		'                    .::::.            快捷键：',
-		'                  .::::::::.            j：下移',
-		'                 :::::::::::            k：上移',
-		"             ..:::::::::::'             t：移到最顶",
-		"           '::::::::::::'               b：移到最底",
-		'             .::::::::::                n：下移很多',
-		"        '::::::::::::::..               m：上移很多",
-		'             ..::::::::::::.',
-		'           ``::::::::::::::::',
-		"            ::::``:::::::::'        .:::.",
-		"           ::::'   ':::::'       .::::::::.",
-		"         .::::'      ::::     .:::::::'::::.",
-		"        .:::'       :::::  .::::::::'  ':::::.",
-		"       .::'        :::::::::::::::'      ':::::.",
-		"      .::'        :::::::::::::::'          ':::.",
-		"  ...:::          :::::::::::::'              ``::.",
-		" ```` ':.         '::::::::::'                  ::::..",
-		"                    ':::::'                    ':'````..",
-		''
-	];
-
-	comments.forEach(function (item) {
-		console.log('%c' + item, 'color: #399c9c');
-	});
-
-	$('.btn-reward').on('click', function (e) {
-		e.preventDefault();
-
-		var $reward = $('.reward-wrapper');
-		$reward.slideToggle();
-	});
-
-	$('body').addClass('queue-in');
-	setTimeout(function() {
-		$('body').css({ opacity: 1}).removeClass('queue-in');
-	}, 500);
-
-});
+   galleries.each(function(){
+     $(this).find(".prev").click(function(){
+       var key = $(this).attr("data-id");
+       slideIndices[key] -=1;
+       console.log("Index is " +  slideIndices[key]);
+       showSlides(key, slideIndices[key]);
+     })
+   })
+   galleries.each(function(){
+     $(this).find(".next").click(function(){
+       var key = $(this).attr("data-id");
+       slideIndices[key] +=1;
+       console.log("Index is " +  slideIndices[key]);
+       showSlides(key, slideIndices[key]);
+     })
+   })
+})
